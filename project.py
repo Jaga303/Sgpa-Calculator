@@ -3,24 +3,29 @@ from tkinter import messagebox
 from openpyxl import Workbook, load_workbook
 import os
 
-# Grade to point mapping
+
 grade_points = {
     'O': 10,
-    'A+': 9,
+    'E': 9,
     'A': 8,
-    'B+': 7,
-    'B': 6,
-    'C': 5,
+    'B': 7,
+    'C': 6,
+    'D': 5,
     'F': 0
 }
 
-# Subject and their credits
+
 subject_credits = {
-    'Math': 4,
-    'Physics': 3,
-    'Chemistry': 3,
-    'English': 2,
-    'Computer': 4
+    'Pyhton': 4,
+    'DAA': 3,
+    'COA': 3,
+    'DSP': 2,
+    'EEC': 4,
+    'EIKT': 0,
+    'Python Lab': 3,
+    'COA Lab': 3,
+    'DAA Lab': 3,
+    'Project': 3
 }
 
 def calculate_sgpa(grades):
@@ -33,6 +38,8 @@ def calculate_sgpa(grades):
         credit = subject_credits[subject]
         total_points += gp * credit
         total_credits += credit
+    if total_credits == 0:
+        return 0
     return round(total_points / total_credits, 2)
 
 def save_to_excel(data, sgpa):
@@ -45,14 +52,18 @@ def save_to_excel(data, sgpa):
         ws = wb.active
         ws.append(["Name", "Reg No", "Branch"] + list(subject_credits.keys()) + ["SGPA"])
 
-    row = [data["name"], data["reg_no"], data["branch"]] + [data["grades"][subj] for subj in subject_credits] + [sgpa]
+    row = [data["name"], data["reg_no"], data["branch"]] + [data["grades"].get(subj, "") for subj in subject_credits] + [sgpa]
     ws.append(row)
     wb.save(file)
 
 def submit():
-    name = name_entry.get()
-    reg_no = reg_no_entry.get()
-    branch = branch_entry.get()
+    name = name_entry.get().strip()
+    reg_no = reg_no_entry.get().strip()
+    branch = branch_entry.get().strip()
+
+    if not name or not reg_no or not branch:
+        messagebox.showerror("Error", "Please fill in all personal details.")
+        return
 
     grades = {}
     for subj, entry in grade_entries.items():
@@ -71,10 +82,18 @@ def submit():
     save_to_excel(data, sgpa)
     messagebox.showinfo("Success", f"SGPA calculated: {sgpa}\nData saved to Excel.")
 
-# GUI Setup
+def clear_inputs():
+    name_entry.delete(0, tk.END)
+    reg_no_entry.delete(0, tk.END)
+    branch_entry.delete(0, tk.END)
+    for entry in grade_entries.values():
+        entry.delete(0, tk.END)
+
+
+
 root = tk.Tk()
 root.title("SGPA Calculator")
-root.geometry("400x600")
+root.geometry("600x700")
 
 tk.Label(root, text="Student SGPA Calculator", font=('Arial', 16)).pack(pady=10)
 
@@ -90,7 +109,7 @@ tk.Label(root, text="Branch:").pack()
 branch_entry = tk.Entry(root)
 branch_entry.pack()
 
-tk.Label(root, text="Enter Grades (O, A+, A, B+, B, C, F)").pack(pady=10)
+tk.Label(root, text="Enter Grades (O, E, A, B, C, D, F)").pack(pady=10)
 
 grade_entries = {}
 for subj in subject_credits:
@@ -99,6 +118,7 @@ for subj in subject_credits:
     entry.pack()
     grade_entries[subj] = entry
 
-tk.Button(root, text="Submit", command=submit, bg="green", fg="white").pack(pady=20)
+tk.Button(root, text="Submit", command=submit, bg="green", fg="white").pack(pady=10)
+tk.Button(root, text="Clear", command=clear_inputs, bg="red", fg="white").pack(pady=5)
 
 root.mainloop()
